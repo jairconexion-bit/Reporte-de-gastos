@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GastosPro">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#16324A">
+<title>GastosPro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --navy:#16324A;
+  --navy-dark:#0E2233;
+  --orange:#D9812C;
+  --orange-dark:#B8661B;
+  --green:#2E9E6D;
+  --red:#C0392B;
+  --bg:#F2F4F6;
+  --card:#FFFFFF;
+  --text:#1B2430;
+  --muted:#6B7684;
+  --border:#E2E6EA;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-tap-highlight-color:transparent;
+}
+#app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--bg);position:relative;}
+
+/* TOPBAR */
+.topbar{
+  background:linear-gradient(135deg,var(--navy),var(--navy-dark));
+  color:#fff;padding:16px 16px 14px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:20;
+}
+.topbar h1{font-size:19px;margin:0;font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:8px;}
+.topbar .icon-btn{background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:10px;padding:8px 10px;font-size:15px;cursor:pointer;}
+.topbar .icon-btn:active{background:rgba(255,255,255,.25);}
+.topbar-actions{display:flex;gap:8px;}
+
+/* VIEWS */
+main.view{display:none;padding:16px 16px 90px;flex:1;animation:fadeIn .18s ease;}
+main.view.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+/* CARDS / DASHBOARD */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.stat-card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.stat-card .val{font-size:22px;font-weight:800;color:var(--navy);}
+.stat-card .label{font-size:12px;color:var(--muted);margin-top:2px;}
+.stat-card.warn .val{color:var(--red);}
+.stat-card.good .val{color:var(--green);}
+
+.section-title{font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 8px;}
+
+.big-btn{
+  width:100%;background:var(--orange);color:#fff;border:none;border-radius:var(--radius);
+  padding:15px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 3px 8px rgba(217,129,44,.35);
+}
+.big-btn:active{background:var(--orange-dark);}
+.big-btn.secondary{background:var(--navy);box-shadow:0 3px 8px rgba(22,50,74,.3);}
+.big-btn.secondary:active{background:var(--navy-dark);}
+.big-btn.outline{background:#fff;color:var(--navy);border:2px solid var(--navy);box-shadow:none;}
+
+/* REPORT LIST CARDS */
+.report-card{
+  background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:10px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;
+}
+.report-card:active{background:#FAFBFC;}
+.report-card .rc-left{flex:1;min-width:0;}
+.report-card .rc-title{font-weight:700;font-size:15px;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.report-card .rc-sub{font-size:12.5px;color:var(--muted);margin-top:3px;}
+.report-card .rc-amount{font-weight:800;font-size:15px;color:var(--orange-dark);white-space:nowrap;}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:4px;}
+.badge.devolver{background:#FCEAE8;color:var(--red);}
+.badge.reembolso{background:#E6F5EE;color:var(--green);}
+.badge.ok{background:#EAF0F5;color:var(--navy);}
+
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty-state .emoji{font-size:40px;margin-bottom:10px;}
+
+/* FORM */
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px;}
+.field input[type=text],.field input[type=number],.field input[type=date],.field textarea{
+  width:100%;padding:11px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;background:#fff;color:var(--text);
+}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--navy);}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+.card-box{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+
+/* EXPENSE ITEM ROW (form) */
+.item-row{border:1.5px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;position:relative;background:#FBFCFD;}
+.item-row .item-num{position:absolute;top:-9px;left:10px;background:var(--navy);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;}
+.item-row .del-row{position:absolute;top:-9px;right:10px;background:var(--red);color:#fff;border:none;border-radius:20px;width:22px;height:22px;font-size:13px;cursor:pointer;line-height:22px;}
+.item-row .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.item-row .row-total{margin-top:8px;font-size:13px;font-weight:700;color:var(--navy);text-align:right;}
+.photo-actions{display:flex;gap:8px;margin-top:10px;}
+.photo-actions button{flex:1;background:#EAF0F5;border:none;color:var(--navy);padding:9px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;}
+.photo-thumb-wrap{margin-top:8px;position:relative;display:inline-block;}
+.photo-thumb{width:70px;height:70px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border);}
+.photo-thumb-wrap .rm-photo{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;}
+
+/* TOTALS BOX */
+.totals-box{background:var(--navy);color:#fff;border-radius:var(--radius);padding:14px;margin-top:6px;}
+.totals-box .t-row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px;border-bottom:1px solid rgba(255,255,255,.12);}
+.totals-box .t-row:last-child{border-bottom:none;}
+.totals-box .t-row.highlight{font-weight:800;font-size:16px;}
+.totals-box input{background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:6px;padding:4px 8px;width:100px;text-align:right;font-size:14px;}
+
+/* SIGNATURE */
+.sig-pad-wrap{border:1.5px dashed var(--border);border-radius:12px;overflow:hidden;background:#fff;}
+canvas#sigPad{width:100%;height:150px;display:block;touch-action:none;}
+.sig-actions{display:flex;gap:8px;margin-top:8px;}
+.sig-actions button{flex:1;padding:9px;border-radius:9px;border:none;font-size:13px;font-weight:700;cursor:pointer;background:#EAF0F5;color:var(--navy);}
+
+/* BOTTOM NAV */
+.bottomnav{
+  position:sticky;bottom:0;background:#fff;border-top:1px solid var(--border);
+  display:flex;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:20;
+}
+.nav-item{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:10.5px;font-weight:700;cursor:pointer;padding:4px;}
+.nav-item .ic{font-size:20px;}
+.nav-item.active{color:var(--orange);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,25,35,.55);display:none;align-items:flex-end;justify-content:center;z-index:100;}
+.modal-overlay.active{display:flex;}
+.modal-sheet{background:#fff;width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:20px;max-height:88vh;overflow-y:auto;animation:slideUp .2s ease;}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:none;opacity:1;}}
+.modal-sheet h3{margin:0 0 14px;font-size:17px;color:var(--navy);}
+.modal-actions{display:flex;gap:10px;margin-top:16px;}
+.modal-actions button{flex:1;padding:12px;border-radius:10px;border:none;font-weight:700;font-size:14px;cursor:pointer;}
+.modal-actions .cancel{background:#EDEFF1;color:var(--text);}
+.modal-actions .confirm{background:var(--red);color:#fff;}
+
+/* DETAIL / PRINTABLE REPORT (mimics the spreadsheet look) */
+.detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.detail-actions button{padding:12px 8px;border-radius:10px;border:none;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-whatsapp{background:#25D366;color:#fff;}
+.btn-email{background:#4A6FA5;color:#fff;}
+.btn-export{background:var(--navy);color:#fff;}
+.btn-edit{background:#EAF0F5;color:var(--navy);}
+
+.print-wrap{background:#fff;border-radius:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:6px;}
+.sheet{width:100%;min-width:680px;background:#fff;font-family:Arial,Helvetica,sans-serif;color:#111;padding:14px;font-size:12px;}
+.sheet .sheet-title{text-align:center;font-weight:800;font-size:16px;letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase;}
+.sheet .top-grid{display:grid;grid-template-columns:1.2fr 1.6fr 1fr;gap:6px;margin-bottom:10px;}
+.sheet .box{border:1px solid #222;padding:6px;}
+.sheet .box-label{font-weight:800;font-size:10.5px;text-align:center;background:#EDEDED;border-bottom:1px solid #222;margin:-6px -6px 5px;padding:4px;}
+.sheet .box-value{text-align:center;font-size:12.5px;padding:2px 0;}
+.sheet .concepto{font-weight:800;font-size:15px;text-align:center;padding:10px 0;}
+table.gtable{width:100%;border-collapse:collapse;font-size:10.5px;}
+table.gtable th,table.gtable td{border:1px solid #444;padding:4px 5px;}
+table.gtable th{background:#DCE3EA;font-size:9.5px;text-transform:uppercase;}
+table.gtable td.num{text-align:right;}
+table.gtable td.desc{text-align:left;}
+.sheet .totals-sheet{margin-top:0;width:100%;}
+.sheet .totals-sheet td{border:1px solid #444;padding:5px 8px;font-weight:700;}
+.sheet .totals-sheet td.lbl{background:#EDEDED;}
+.sheet .totals-sheet tr.reembolso td.val{background:#2E9E6D;color:#fff;}
+.sheet .totals-sheet tr.devolver td.val{background:#C0392B;color:#fff;}
+.sheet .firma{margin-top:26px;text-align:center;}
+.sheet .firma .line{border-top:1px solid #222;width:60%;margin:0 auto 4px;}
+.sheet .firma img{max-height:50px;display:block;margin:0 auto 4px;}
+.sheet .boletas-title{font-weight:800;font-size:11px;margin:14px 0 6px;text-transform:uppercase;}
+.sheet .boletas-grid{display:flex;flex-wrap:wrap;gap:6px;}
+.sheet .boletas-grid img{width:90px;height:90px;object-fit:cover;border:1px solid #444;border-radius:3px;}
+
+.hint{font-size:12px;color:var(--muted);text-align:center;margin-top:6px;}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1B2430;color:#fff;padding:10px 18px;border-radius:30px;font-size:13px;z-index:200;box-shadow:0 4px 14px rgba(0,0,0,.25);display:none;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <h1>🧾 GastosPro</h1>
+    <div class="topbar-actions">
+      <span id="sync-dot" title="Estado de sincronización" style="font-size:15px;">🔴</span>
+      <button class="icon-btn" onclick="syncFromCloud(true)" title="Sincronizar">🔄</button>
+      <button class="icon-btn" onclick="openSettings()" title="Ajustes">⚙️</button>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <main class="view active" id="view-home">
+    <div id="setup-banner" class="card-box" style="display:none;background:#FFF6E9;border:1.5px solid #F0C674;">
+      <strong style="color:#8A5A00;">⚠️ Falta conectar tu Google Sheet</strong>
+      <p style="font-size:13px;color:#8A5A00;margin:6px 0 10px;">Para que tus reportes se sincronicen entre tu celular y tu computadora, conecta tu hoja de cálculo.</p>
+      <button class="big-btn secondary" onclick="openSettings()">⚙️ Conectar ahora</button>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="val" id="stat-count">0</div><div class="label">Reportes</div></div>
+      <div class="stat-card"><div class="val" id="stat-total">S/0</div><div class="label">Total gastado</div></div>
+      <div class="stat-card warn"><div class="val" id="stat-devolver">S/0</div><div class="label">Por devolver a empresa</div></div>
+      <div class="stat-card good"><div class="val" id="stat-reembolso">S/0</div><div class="label">Por reembolsar</div></div>
+    </div>
+    <button class="big-btn" onclick="newReport()">➕ Nuevo reporte de gastos</button>
+    <div class="section-title">Reportes recientes</div>
+    <div id="home-recent"></div>
+  </main>
+
+  <!-- LIST -->
+  <main class="view" id="view-list">
+    <div class="section-title" style="margin-top:0">Todos los reportes</div>
+    <div id="list-all"></div>
+  </main>
+
+  <!-- FORM -->
+  <main class="view" id="view-form">
+    <div class="section-title" style="margin-top:0" id="form-heading">Nuevo reporte</div>
+
+    <div class="card-box">
+      <div class="field">
+        <label>Título del reporte</label>
+        <input type="text" id="f-titulo" placeholder="Ej: Reparación de fibra">
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label>Fecha depósito</label>
+          <input type="date" id="f-fechaDeposito">
+        </div>
+        <div class="field">
+          <label>Monto depósito (S/)</label>
+          <input type="number" id="f-montoDeposito" step="0.01" placeholder="0.00" oninput="onMontoDepositoChange()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Concepto (motivo del gasto)</label>
+        <input type="text" id="f-concepto" placeholder="Ej: Compra de materiales">
+      </div>
+    </div>
+
+    <div class="section-title">Detalle de gastos</div>
+    <div id="items-container"></div>
+    <button class="big-btn outline" style="margin-bottom:16px" onclick="addItem()">➕ Agregar gasto</button>
+
+    <div class="totals-box">
+      <div class="t-row"><span>Total gastado</span><span id="tb-total">S/0.00</span></div>
+      <div class="t-row"><span>Importe otorgado</span><input type="number" id="tb-importe" step="0.01" oninput="renderTotals()"></div>
+      <div class="t-row"><span>Devolver a empresa</span><span id="tb-devolver">S/0.00</span></div>
+      <div class="t-row highlight"><span>Reembolso a trabajador</span><span id="tb-reembolso">S/0.00</span></div>
+    </div>
+
+    <div class="section-title">Firma del colaborador</div>
+    <div class="card-box">
+      <div class="field">
+        <label>Nombre del colaborador</label>
+        <input type="text" id="f-firmaNombre" placeholder="Nombre y apellido">
+      </div>
+      <div class="sig-pad-wrap">
+        <canvas id="sigPad"></canvas>
+      </div>
+      <div class="sig-actions">
+        <button onclick="clearSig()">🗑 Borrar firma</button>
+      </div>
+    </div>
+
+    <button class="big-btn" onclick="saveReport()">💾 Guardar reporte</button>
+  </main>
+
+  <!-- DETAIL / PRINTABLE -->
+  <main class="view" id="view-detail">
+    <div class="detail-actions">
+      <button class="btn-whatsapp" onclick="shareReport()">🟢 WhatsApp</button>
+      <button class="btn-email" onclick="shareReport()">✉️ Correo</button>
+      <button class="btn-export" onclick="exportImage()">🖼️ Exportar imagen</button>
+      <button class="btn-edit" onclick="editCurrentReport()">✏️ Editar</button>
+    </div>
+    <div class="print-wrap">
+      <div class="sheet" id="printable"></div>
+    </div>
+    <div class="hint" style="margin-bottom:16px;">↔️ Desliza el reporte para ver todas las columnas</div>
+    <button class="big-btn outline" style="border-color:var(--red);color:var(--red)" onclick="confirmDeleteReport()">🗑 Eliminar reporte</button>
+    <div class="hint">Al compartir o exportar, solo se envía la imagen del reporte (y las fotos de boletas adjuntas), sin texto adicional.</div>
+  </main>
+
+  <nav class="bottomnav">
+    <button class="nav-item active" data-view="home" onclick="switchView('home')"><span class="ic">🏠</span>Inicio</button>
+    <button class="nav-item" data-view="list" onclick="switchView('list')"><span class="ic">📋</span>Reportes</button>
+    <button class="nav-item" data-view="form" onclick="newReport()"><span class="ic">➕</span>Nuevo</button>
+  </nav>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal-sheet">
+    <h3>⚠️ ¿Eliminar reporte?</h3>
+    <p style="color:var(--muted);font-size:14px;">Esta acción no se puede deshacer.</p>
+    <div class="modal-actions">
+      <button class="cancel" onclick="closeModal('modal-delete')">Cancelar</button>
+      <button class="confirm" onclick="doDeleteReport()">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="modal-settings">
+  <div class="modal-sheet">
+    <h3>⚙️ Conectar Google Sheets</h3>
+    <p style="font-size:13px;color:var(--muted);margin-top:-6px;">Pega aquí el enlace de tu Web App de Google Apps Script (ver INSTRUCCIONES.md). Esto permite que tus reportes se guarden en tu Google Sheet y se vean desde cualquier equipo.</p>
+    <div class="field">
+      <label>Enlace de la Web App</label>
+      <input type="text" id="s-apiurl" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" onclick="closeModal('modal-settings')">Cancelar</button>
+      <button class="confirm" style="background:var(--navy)" onclick="saveSettings()">Guardar y sincronizar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- STATE ---------------- */
+const STORAGE_KEY = 'gastospro_cache_v1';
+const API_URL_KEY = 'gastospro_api_url';
+let API_URL = localStorage.getItem(API_URL_KEY) || '';
+let appData = { reports: [] };
+let currentReport = null; // object being edited
+let currentDetailId = null;
+let currentFullReport = null; // full data (with photos) of the report being viewed/edited
+let pendingDeleteId = null;
+let sigCtx = null, sigDrawing = false, sigHasContent = false, sigChanged = false;
+
+function loadCacheFromLocal(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    appData = raw ? JSON.parse(raw) : { reports: [] };
+  }catch(e){ appData = { reports: [] }; }
+}
+function cacheLocally(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+}
+function uid(){ return 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+
+/* ---------------- API (Google Apps Script) ---------------- */
+function setSyncStatus(state){
+  const dot = document.getElementById('sync-dot');
+  if(!dot) return;
+  dot.textContent = state==='ok' ? '🟢' : state==='sync' ? '🟡' : '🔴';
+}
+async function apiGet(params){
+  if(!API_URL) throw new Error('no-url');
+  const qs = new URLSearchParams(params).toString();
+  const sep = API_URL.includes('?') ? '&' : '?';
+  const res = await fetch(API_URL + sep + qs);
+  return await res.json();
+}
+async function apiPost(payload){
+  if(!API_URL) throw new Error('no-url');
+  const res = await fetch(API_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  });
+  return await res.json();
+}
+async function syncFromCloud(manual){
+  updateSetupBanner();
+  if(!API_URL){ setSyncStatus('error'); if(manual) toast('⚠️ Configura tu Google Sheet en Ajustes'); return; }
+  setSyncStatus('sync');
+  try{
+    const list = await apiGet({action:'listSummary'});
+    if(list.error) throw new Error(list.error);
+    appData.reports = list;
+    cacheLocally();
+    setSyncStatus('ok');
+    if(manual) toast('✅ Sincronizado');
+    renderHome(); renderList();
+  }catch(err){
+    setSyncStatus('error');
+    if(manual) toast('❌ Sin conexión, mostrando datos guardados');
+  }
+}
+async function fetchFullReport(id){
+  if(!API_URL){ toast('⚠️ Configura tu Google Sheet en Ajustes'); return null; }
+  setSyncStatus('sync');
+  try{
+    const full = await apiGet({action:'getReport', id});
+    setSyncStatus('ok');
+    if(full.error) throw new Error(full.error);
+    return full;
+  }catch(err){
+    setSyncStatus('error');
+    toast('❌ No se pudo cargar (sin conexión)');
+    return null;
+  }
+}
+function updateSetupBanner(){
+  const banner = document.getElementById('setup-banner');
+  if(banner) banner.style.display = API_URL ? 'none' : 'block';
+}
+function openSettings(){
+  document.getElementById('s-apiurl').value = API_URL;
+  document.getElementById('modal-settings').classList.add('active');
+}
+function saveSettings(){
+  const val = document.getElementById('s-apiurl').value.trim();
+  API_URL = val;
+  localStorage.setItem(API_URL_KEY, val);
+  closeModal('modal-settings');
+  toast('Guardado, sincronizando...');
+  syncFromCloud(true);
+}
+function fmt(n){ return 'S/' + (Number(n)||0).toFixed(2); }
+function fmtDateOnly(v){
+  if(!v) return '';
+  const s = String(v);
+  return s.includes('T') ? s.split('T')[0] : s;
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display='block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>{ t.style.display='none'; }, 2200);
+}
+
+/* ---------------- NAVIGATION ---------------- */
+function switchView(name){
+  document.querySelectorAll('main.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const navBtn = document.querySelector('.nav-item[data-view="'+name+'"]');
+  if(navBtn) navBtn.classList.add('active');
+  if(name==='home') renderHome();
+  if(name==='list') renderList();
+}
+
+/* ---------------- HOME / LIST RENDER ---------------- */
+function renderHome(){
+  const reports = appData.reports;
+  document.getElementById('stat-count').textContent = reports.length;
+  let totalGastado=0, devolver=0, reembolso=0;
+  reports.forEach(r=>{
+    const t = calcTotals(r);
+    totalGastado += t.total;
+    devolver += t.devolver;
+    reembolso += t.reembolso;
+  });
+  document.getElementById('stat-total').textContent = fmt(totalGastado);
+  document.getElementById('stat-devolver').textContent = fmt(devolver);
+  document.getElementById('stat-reembolso').textContent = fmt(reembolso);
+
+  const recentBox = document.getElementById('home-recent');
+  const recent = [...reports].sort((a,b)=>b.updatedAt-a.updatedAt).slice(0,5);
+  recentBox.innerHTML = recent.length ? recent.map(cardHtml).join('') : emptyHtml();
+}
+function renderList(){
+  const box = document.getElementById('list-all');
+  const all = [...appData.reports].sort((a,b)=>b.updatedAt-a.updatedAt);
+  box.innerHTML = all.length ? all.map(cardHtml).join('') : emptyHtml();
+}
+function emptyHtml(){
+  return `<div class="empty-state"><div class="emoji">🧾</div>Aún no tienes reportes.<br>Toca "Nuevo reporte" para empezar.</div>`;
+}
+function cardHtml(r){
+  const t = calcTotals(r);
+  let badge = `<span class="badge ok">Cuadrado</span>`;
+  if(t.devolver>0) badge = `<span class="badge devolver">Devolver ${fmt(t.devolver)}</span>`;
+  else if(t.reembolso>0) badge = `<span class="badge reembolso">Reembolso ${fmt(t.reembolso)}</span>`;
+  const dateStr = fmtDateOnly(r.fechaDeposito);
+  return `<div class="report-card" onclick="openDetail('${r.id}')">
+    <div class="rc-left">
+      <div class="rc-title">${escapeHtml(r.titulo||'Sin título')}</div>
+      <div class="rc-sub">${escapeHtml(r.concepto||'')} ${dateStr?'· '+dateStr:''}</div>
+      ${badge}
+    </div>
+    <div class="rc-amount">${fmt(t.total)}</div>
+  </div>`;
+}
+function calcTotals(r){
+  const total = (r.items||[]).reduce((s,it)=> s + rowTotal(it), 0);
+  const importe = Number(r.importeOtorgado||0);
+  const devolver = importe>total ? importe-total : 0;
+  const reembolso = total>importe ? total-importe : 0;
+  return {total, importe, devolver, reembolso};
+}
+function rowTotal(it){
+  return (Number(it.alimentacion)||0)+(Number(it.movilidad)||0)+(Number(it.porConcepto)||0);
+}
+function escapeHtml(s){
+  return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------------- FORM: NEW / EDIT ---------------- */
+function newReport(){
+  if(!API_URL){ openSettings(); return; }
+  currentReport = {
+    id: uid(), titulo:'', fechaDeposito: new Date().toISOString().slice(0,10),
+    montoDeposito:0, concepto:'', items:[], importeOtorgado:0,
+    firmaNombre:'', firma:'', firmaId:'', createdAt: Date.now(), updatedAt: Date.now()
+  };
+  loadFormFromReport();
+  document.getElementById('form-heading').textContent = 'Nuevo reporte';
+  switchView('form');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+}
+async function editReport(id){
+  toast('Cargando reporte...');
+  const full = await fetchFullReport(id);
+  if(!full) return;
+  currentReport = full;
+  currentReport.items = (currentReport.items||[]).map(it=>({...it, photoChanged:false}));
+  currentReport.firmaChanged = false;
+  loadFormFromReport();
+  document.getElementById('form-heading').textContent = 'Editar reporte';
+  switchView('form');
+}
+function editCurrentReport(){
+  if(currentDetailId) editReport(currentDetailId);
+}
+function loadFormFromReport(){
+  document.getElementById('f-titulo').value = currentReport.titulo||'';
+  document.getElementById('f-fechaDeposito').value = fmtDateOnly(currentReport.fechaDeposito);
+  document.getElementById('f-montoDeposito').value = currentReport.montoDeposito||'';
+  document.getElementById('f-concepto').value = currentReport.concepto||'';
+  document.getElementById('f-firmaNombre').value = currentReport.firmaNombre||'';
+  document.getElementById('tb-importe').value = currentReport.importeOtorgado || currentReport.montoDeposito || 0;
+  renderItems();
+  renderTotals();
+  setTimeout(initSigPad, 30);
+}
+function onMontoDepositoChange(){
+  const v = Number(document.getElementById('f-montoDeposito').value)||0;
+  if(!document.getElementById('tb-importe').dataset.touched){
+    document.getElementById('tb-importe').value = v;
+  }
+  renderTotals();
+}
+
+/* ---- Items ---- */
+function renderItems(){
+  const box = document.getElementById('items-container');
+  if(!currentReport.items.length){
+    box.innerHTML = '<div class="hint">Aún no agregaste gastos. Toca "Agregar gasto".</div>';
+    return;
+  }
+  box.innerHTML = currentReport.items.map((it,idx)=>itemRowHtml(it,idx)).join('');
+}
+function itemRowHtml(it, idx){
+  const photoHtml = it.foto
+    ? `<div class="photo-thumb-wrap"><img class="photo-thumb" src="${it.foto}"><button class="rm-photo" onclick="removePhoto(${idx})">✕</button></div>`
+    : '';
+  return `<div class="item-row">
+    <div class="item-num">#${idx+1}</div>
+    <button class="del-row" onclick="removeItem(${idx})">✕</button>
+    <div class="row-2">
+      <div class="field" style="margin-bottom:8px"><label>Fecha</label>
+        <input type="date" value="${fmtDateOnly(it.fecha)}" onchange="updateItem(${idx},'fecha',this.value)"></div>
+      <div class="field" style="margin-bottom:8px"><label>Boleta/Factura N°</label>
+        <input type="text" value="${escapeHtml(it.boleta)}" placeholder="Opcional" onchange="updateItem(${idx},'boleta',this.value)"></div>
+    </div>
+    <div class="field" style="margin-bottom:8px"><label>Descripción</label>
+      <input type="text" value="${escapeHtml(it.descripcion)}" placeholder="Ej: Pasaje terminal - casa" onchange="updateItem(${idx},'descripcion',this.value)"></div>
+    <div class="row-3">
+      <div class="field" style="margin-bottom:0"><label>Alimentación</label>
+        <input type="number" step="0.01" value="${it.alimentacion||''}" onchange="updateItem(${idx},'alimentacion',this.value)"></div>
+      <div class="field" style="margin-bottom:0"><label>Movilidad</label>
+        <input type="number" step="0.01" value="${it.movilidad||''}" onchange="updateItem(${idx},'movilidad',this.value)"></div>
+      <div class="field" style="margin-bottom:0"><label>Por concepto</label>
+        <input type="number" step="0.01" value="${it.porConcepto||''}" onchange="updateItem(${idx},'porConcepto',this.value)"></div>
+    </div>
+    <div class="row-total">Total: ${fmt(rowTotal(it))}</div>
+    <div class="photo-actions">
+      <button onclick="triggerPhoto(${idx},'camera')">📷 Cámara</button>
+      <button onclick="triggerPhoto(${idx},'gallery')">🖼️ Galería</button>
+    </div>
+    ${photoHtml}
+    <input type="file" accept="image/*" ${''} id="cam-${idx}" style="display:none" onchange="onPhotoSelected(event,${idx})">
+  </div>`;
+}
+function addItem(){
+  currentReport.items.push({fecha:currentReport.fechaDeposito||'', descripcion:'', boleta:'', alimentacion:'', movilidad:'', porConcepto:'', foto:'', fotoId:'', photoChanged:false});
+  renderItems(); renderTotals();
+}
+function removeItem(idx){
+  currentReport.items.splice(idx,1);
+  renderItems(); renderTotals();
+}
+function updateItem(idx, field, val){
+  currentReport.items[idx][field] = val;
+  renderItems(); renderTotals();
+}
+function removePhoto(idx){
+  currentReport.items[idx].foto = '';
+  currentReport.items[idx].photoChanged = true;
+  renderItems();
+}
+function triggerPhoto(idx, mode){
+  const input = document.getElementById('cam-'+idx);
+  if(mode==='camera'){ input.setAttribute('capture','environment'); }
+  else { input.removeAttribute('capture'); }
+  input.click();
+}
+function onPhotoSelected(evt, idx){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    currentReport.items[idx].foto = e.target.result;
+    currentReport.items[idx].photoChanged = true;
+    renderItems();
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ---- Totals ---- */
+function renderTotals(){
+  const total = (currentReport.items||[]).reduce((s,it)=>s+rowTotal(it),0);
+  const importeInput = document.getElementById('tb-importe');
+  if(document.activeElement===importeInput) importeInput.dataset.touched='1';
+  const importe = Number(importeInput.value)||0;
+  const devolver = importe>total ? importe-total : 0;
+  const reembolso = total>importe ? total-importe : 0;
+  document.getElementById('tb-total').textContent = fmt(total);
+  document.getElementById('tb-devolver').textContent = fmt(devolver);
+  document.getElementById('tb-reembolso').textContent = fmt(reembolso);
+}
+
+/* ---- Signature pad ---- */
+function initSigPad(){
+  const canvas = document.getElementById('sigPad');
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.clientWidth;
+  canvas.height = 150;
+  sigCtx = canvas.getContext('2d');
+  sigCtx.clearRect(0,0,canvas.width,canvas.height);
+  sigCtx.lineWidth = 2.2;
+  sigCtx.lineCap = 'round';
+  sigCtx.strokeStyle = '#16324A';
+  sigHasContent = false;
+  sigChanged = false;
+  if(currentReport.firma){
+    const img = new Image();
+    img.onload = ()=>{ sigCtx.drawImage(img,0,0,canvas.width,canvas.height); sigHasContent=true; };
+    img.src = currentReport.firma;
+  }
+  function pos(e){
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX-rect.left, y: t.clientY-rect.top };
+  }
+  function start(e){ sigDrawing=true; const p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); sigChanged=true; e.preventDefault(); }
+  function move(e){ if(!sigDrawing) return; const p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); sigHasContent=true; sigChanged=true; e.preventDefault(); }
+  function end(){ sigDrawing=false; }
+  canvas.onmousedown=start; canvas.onmousemove=move; canvas.onmouseup=end; canvas.onmouseleave=end;
+  canvas.ontouchstart=start; canvas.ontouchmove=move; canvas.ontouchend=end;
+}
+function clearSig(){
+  const canvas = document.getElementById('sigPad');
+  sigCtx.clearRect(0,0,canvas.width,canvas.height);
+  sigHasContent = false;
+  sigChanged = true;
+}
+
+/* ---- Save ---- */
+async function saveReport(){
+  if(!API_URL){ openSettings(); return; }
+  currentReport.titulo = document.getElementById('f-titulo').value.trim() || 'Reporte de gastos';
+  currentReport.fechaDeposito = document.getElementById('f-fechaDeposito').value;
+  currentReport.montoDeposito = Number(document.getElementById('f-montoDeposito').value)||0;
+  currentReport.concepto = document.getElementById('f-concepto').value.trim();
+  currentReport.importeOtorgado = Number(document.getElementById('tb-importe').value)||0;
+  currentReport.firmaNombre = document.getElementById('f-firmaNombre').value.trim();
+  const canvas = document.getElementById('sigPad');
+  const newFirma = sigHasContent ? canvas.toDataURL('image/png') : '';
+
+  const payload = {
+    id: currentReport.id,
+    titulo: currentReport.titulo,
+    fechaDeposito: currentReport.fechaDeposito,
+    montoDeposito: currentReport.montoDeposito,
+    concepto: currentReport.concepto,
+    importeOtorgado: currentReport.importeOtorgado,
+    firmaNombre: currentReport.firmaNombre,
+    firmaId: currentReport.firmaId || '',
+    firmaChanged: !!sigChanged,
+    firmaData: sigChanged ? (newFirma || null) : null,
+    items: (currentReport.items||[]).map(it=>({
+      fecha: it.fecha||'', descripcion: it.descripcion||'', boleta: it.boleta||'',
+      alimentacion: Number(it.alimentacion)||0, movilidad: Number(it.movilidad)||0, porConcepto: Number(it.porConcepto)||0,
+      fotoId: it.fotoId||'', photoChanged: !!it.photoChanged,
+      photoData: it.photoChanged ? (it.foto || null) : null
+    }))
+  };
+
+  toast('Guardando en la nube...');
+  setSyncStatus('sync');
+  try{
+    const res = await apiPost({action:'save', report: payload});
+    if(res.error) throw new Error(res.error);
+    setSyncStatus('ok');
+    toast('✅ Reporte guardado y sincronizado');
+    await syncFromCloud(false);
+    openDetail(currentReport.id);
+  }catch(err){
+    setSyncStatus('error');
+    toast('❌ No se pudo guardar. Revisa tu conexión o el enlace en Ajustes.');
+  }
+}
+
+/* ---------------- DETAIL / PRINTABLE ---------------- */
+async function openDetail(id){
+  currentDetailId = id;
+  switchView('detail');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('printable').innerHTML = '<p style="text-align:center;color:#888;padding:30px 0;">Cargando reporte...</p>';
+  const full = await fetchFullReport(id);
+  if(!full) return;
+  currentFullReport = full;
+  renderPrintable(full);
+}
+function renderPrintable(r){
+  const t = calcTotals(r);
+  const rowsHtml = (r.items||[]).map(it=>`
+    <tr>
+      <td>${fmtDateOnly(it.fecha)}</td>
+      <td class="desc">${escapeHtml(it.descripcion)}</td>
+      <td>${escapeHtml(it.boleta)}</td>
+      <td class="num">${it.alimentacion? Number(it.alimentacion).toFixed(2):''}</td>
+      <td class="num">${it.movilidad? Number(it.movilidad).toFixed(2):''}</td>
+      <td class="num">${it.porConcepto? Number(it.porConcepto).toFixed(2):''}</td>
+      <td class="num">${rowTotal(it).toFixed(2)}</td>
+    </tr>`).join('');
+
+  const photos = (r.items||[]).map((it,i)=> it.foto ? `<img src="${it.foto}" alt="Boleta ${i+1}">` : '').filter(Boolean).join('');
+
+  const firmaBlock = r.firma
+    ? `<img src="${r.firma}"><div class="line"></div><div>${escapeHtml(r.firmaNombre||'Firma colaborador')}</div>`
+    : `<div class="line"></div><div>${escapeHtml(r.firmaNombre||'Firma colaborador')}</div>`;
+
+  document.getElementById('printable').innerHTML = `
+    <div class="sheet-title">${escapeHtml(r.titulo)}</div>
+    <div class="top-grid">
+      <div class="box"><div class="box-label">Fecha depósito</div><div class="box-value">${fmtDateOnly(r.fechaDeposito)||'-'}</div></div>
+      <div class="box"><div class="box-value" style="font-weight:800;font-size:14px;padding:8px 0;">${escapeHtml(r.concepto||'')}</div></div>
+      <div class="box"><div class="box-label">Monto depósito</div><div class="box-value">${fmt(r.montoDeposito)}</div></div>
+    </div>
+    <table class="gtable">
+      <thead><tr>
+        <th>Fecha</th><th>Descripción</th><th>Boleta/Factura</th><th>Alimentación</th><th>Movilidad</th><th>Por concepto</th><th>Total</th>
+      </tr></thead>
+      <tbody>${rowsHtml || '<tr><td colspan="7" style="text-align:center;color:#888;">Sin gastos registrados</td></tr>'}</tbody>
+    </table>
+    <table class="totals-sheet">
+      <tr><td class="lbl">TOTAL</td><td class="val" style="text-align:right">${fmt(t.total)}</td></tr>
+      <tr><td class="lbl">IMPORTE OTORGADO</td><td class="val" style="text-align:right">${fmt(t.importe)}</td></tr>
+      <tr class="devolver"><td class="lbl">DEVOLVER EMPRESA</td><td class="val" style="text-align:right">${fmt(t.devolver)}</td></tr>
+      <tr class="reembolso"><td class="lbl">REEMBOLSO A TRABAJADOR</td><td class="val" style="text-align:right">${fmt(t.reembolso)}</td></tr>
+    </table>
+    <div class="firma">${firmaBlock}</div>
+    ${photos ? `<div class="boletas-title">Boletas / Facturas adjuntas</div><div class="boletas-grid">${photos}</div>` : ''}
+  `;
+}
+
+/* ---- Delete ---- */
+function confirmDeleteReport(){
+  pendingDeleteId = currentDetailId;
+  document.getElementById('modal-delete').classList.add('active');
+}
+function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+async function doDeleteReport(){
+  closeModal('modal-delete');
+  toast('Eliminando...');
+  try{
+    const res = await apiPost({action:'delete', id: pendingDeleteId});
+    if(res.error) throw new Error(res.error);
+    toast('Reporte eliminado');
+    await syncFromCloud(false);
+    switchView('list');
+  }catch(err){
+    toast('❌ No se pudo eliminar. Revisa tu conexión.');
+  }
+}
+
+/* ---------------- EXPORT / SHARE (image only) ---------------- */
+function dataURLtoBlob(dataUrl){
+  const arr = dataUrl.split(','); const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]); let n = bstr.length; const u8 = new Uint8Array(n);
+  while(n--){ u8[n] = bstr.charCodeAt(n); }
+  return new Blob([u8], {type:mime});
+}
+function sanitizeFilename(s){
+  return (s||'reporte').replace(/[^a-z0-9_\-]+/gi,'_').slice(0,40);
+}
+async function captureReportCanvas(){
+  if(typeof html2canvas === 'undefined'){
+    toast('❌ No cargó el motor de imagen, revisa tu conexión e intenta de nuevo');
+    throw new Error('html2canvas no disponible');
+  }
+  const el = document.getElementById('printable');
+  return await html2canvas(el, {scale:2, backgroundColor:'#ffffff', useCORS:true, windowWidth: el.scrollWidth});
+}
+async function exportImage(){
+  if(!currentFullReport){ toast('Espera a que cargue el reporte'); return; }
+  toast('Generando imagen...');
+  try{
+    const canvas = await captureReportCanvas();
+    const blob = await new Promise(res=>canvas.toBlob(res,'image/png'));
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Reporte_' + sanitizeFilename(currentFullReport.titulo) + '.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+    toast('✅ Imagen exportada');
+  }catch(err){
+    toast('❌ No se pudo generar la imagen: ' + (err && err.message ? err.message : 'error desconocido'));
+  }
+}
+async function shareReport(){
+  const r = currentFullReport;
+  if(!r){ toast('Espera a que cargue el reporte'); return; }
+  toast('Preparando imágenes...');
+  try{
+    const canvas = await captureReportCanvas();
+    const mainBlob = await new Promise(res=>canvas.toBlob(res,'image/png'));
+    if(!mainBlob) throw new Error('no se pudo generar la imagen del reporte');
+    const files = [new File([mainBlob], 'Reporte_'+sanitizeFilename(r.titulo)+'.png', {type:'image/png'})];
+    (r.items||[]).forEach((it,i)=>{
+      if(it.foto){
+        files.push(new File([dataURLtoBlob(it.foto)], 'Boleta_'+(i+1)+'.png', {type:'image/png'}));
+      }
+    });
+    if(navigator.canShare && navigator.canShare({files})){
+      try{
+        await navigator.share({files});
+        toast('✅ Compartido');
+      }catch(err){
+        if(err && err.name!=='AbortError') toast('❌ No se pudo compartir: '+err.message);
+      }
+    } else {
+      files.forEach((f)=>{
+        const url = URL.createObjectURL(f);
+        const a = document.createElement('a');
+        a.href = url; a.download = f.name;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url), 4000);
+      });
+      toast('Tu navegador no permite compartir archivos. Se descargaron las imágenes.');
+    }
+  }catch(err){
+    toast('❌ Error al preparar el reporte: ' + (err && err.message ? err.message : 'intenta de nuevo'));
+  }
+}
+
+/* ---------------- INIT ---------------- */
+loadCacheFromLocal();
+updateSetupBanner();
+renderHome();
+syncFromCloud(false);
+</script>
+</body>
+</html>
